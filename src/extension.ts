@@ -3,32 +3,37 @@
 import { url } from 'inspector';
 import * as vscode from 'vscode';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+
+let iswindows = process.platform === 'win32';
+let sep = iswindows ? '\\' : '/';
+
+
 async function checkfile(path: string, filename: string, ext: string) {
 	let flag = false;
 	let uri;
 	while (!flag) {
 		try {
-			await vscode.workspace.fs.stat(vscode.Uri.file(path + '\\' + filename));
-			console.log('File exists');
-			filename = 'playground' + Math.floor(Math.random() * 1000) + ext;
-			uri = vscode.Uri.file(path + '\\' + filename);
+			await vscode.workspace.fs.stat(vscode.Uri.file(path + sep + filename));
+			filename = 'playground' + Math.floor(Math.random() * 10000) + ext;
+			uri = vscode.Uri.file(path + sep + filename);
 		} catch (error) {
-			console.log('File does not exist');
-			uri = vscode.Uri.file(path + '\\' + filename);
+			uri = vscode.Uri.file(path + sep + filename);
 			flag = true;
 		}
 	}
 	return uri
 }
+// This method is called when your extension is activated
+// Your extension is activated the very first time the command is executed
+
 export function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	// if os is windows set the default path to %TEMP%\CodePlayground
-	if (process.platform === 'win32') {
-		var path = process.env.TEMP + '\\CodePlayground';
+	let path = vscode.workspace.getConfiguration().get('codeplayground.path') || '';
+	if (iswindows && path === '/tmp/codeplayground') {
+		let path = process.env.TEMP + '\\CodePlayground';
 		vscode.workspace.getConfiguration().update('codeplayground.path', path, vscode.ConfigurationTarget.Global);
 	}
 	// The command has been defined in the package.json file
@@ -36,11 +41,17 @@ export function activate(context: vscode.ExtensionContext) {
 	// The commandId parameter must match the command field in package.json
 	const disposable = vscode.commands.registerCommand('codeplayground.openPlayground', () => {
 		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
 		let path: string = vscode.workspace.getConfiguration().get('codeplayground.path') || '';
 		if (path === '') {
-			vscode.window.showErrorMessage('Path not valid');
-			return;
+			// Error message with a button to set the path
+			vscode.window.showErrorMessage('Path is invalid', 'Change path', 'Reset path')
+				.then(selection => {
+					if (selection === 'Change path') {
+						vscode.commands.executeCommand('workbench.action.openSettings', 'codeplayground.path');
+					} else if (selection === 'Reset path') {
+						vscode.workspace.getConfiguration().update('codeplayground.path', '/tmp/codeplayground', vscode.ConfigurationTarget.Global);
+					}
+				});
 		}
 		Promise.resolve(vscode.workspace.fs.createDirectory(vscode.Uri.file(path)))
 			.then(() => {

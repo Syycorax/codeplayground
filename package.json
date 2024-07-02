@@ -33,7 +33,8 @@
         "codeplayground.path": {
           "type": "string",
           "default": "/tmp/codeplayground",
-          "description": "The path to the code playground"
+          "description": "The path to the code playground",
+          "scope": "machine"
         }
       }
     },
