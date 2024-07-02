@@ -44,8 +44,33 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		Promise.resolve(vscode.workspace.fs.createDirectory(vscode.Uri.file(path)))
 			.then(() => {
-				vscode.window.showInformationMessage('Directory created successfully');
-				vscode.window.showInformationMessage('Path: ' + path);
+				vscode.window.showInputBox({ prompt: 'Enter the extension of the playground' }).then((ext) => {
+					if (ext === undefined || ext === '' || ext === null) {
+						return;
+					}
+					if (!ext.startsWith('.')) {
+						ext = '.' + ext;
+					}
+					let filename = 'playground' + Math.floor(Math.random() * 1000) + ext;
+					let uri = vscode.Uri.file(path + '\\' + filename);
+					checkfile(path, filename, ext).then((uri) => {
+						if (uri === undefined) {
+							vscode.window.showErrorMessage('Error creating file, uri is undefined');
+							return;
+						}
+						Promise.resolve(vscode.workspace.fs.writeFile(uri, new Uint8Array(Buffer.from(''))))
+							.then(() => {
+								vscode.window.showInformationMessage('File created successfully');
+								vscode.workspace.openTextDocument(uri).then((doc) => {
+									vscode.window.showTextDocument(doc, { preview: false });
+								});
+							})
+							.catch(error => {
+								vscode.window.showErrorMessage('Error creating file ' + error.message);
+							});
+					});
+				}
+				);
 			})
 			.catch(error => {
 				// if error is file exists error, pass
@@ -54,38 +79,7 @@ export function activate(context: vscode.ExtensionContext) {
 					return;
 				}
 			});
-		vscode.window.showInputBox({ prompt: 'Enter the extension of the playground' }).then((ext) => {
-			if (ext === undefined || ext === '' || ext === null) {
-				vscode.window.showErrorMessage('Extension not valid');
-				return;
-			}
-			console.log(ext);
-			if (!ext.startsWith('.')) {
-				ext = '.' + ext;
-			}
-			console.log(ext);
-			let filename = 'playground' + Math.floor(Math.random() * 1000) + ext;
-			console.log(filename);
-			let uri = vscode.Uri.file(path + '\\' + filename);
-			checkfile(path, filename, ext).then((uri) => {
-				if (uri === undefined) {
-					vscode.window.showErrorMessage('Error creating file, uri is undefined');
-					return;
-				}
-				Promise.resolve(vscode.workspace.fs.writeFile(uri, new Uint8Array(Buffer.from(''))))
-					.then(() => {
-						vscode.window.showInformationMessage('File created successfully');
-						vscode.workspace.openTextDocument(uri).then((doc) => {
-							// open doc in a new tab (this MUST be a new tab and not beside the current one)
-							vscode.window.showTextDocument(doc, { preview: false });
-						});
-					})
-					.catch(error => {
-						vscode.window.showErrorMessage('Error creating file ' + error.message);
-					});
-			});
-		}
-		);
+
 	});
 	context.subscriptions.push(disposable);
 }

@@ -2,11 +2,18 @@
   "name": "codeplayground",
   "displayName": "CodePlayground",
   "description": "Create temporary code playgrounds in VS Code",
-  "version": "0.0.1",
+  "version": "1.0.1",
   "publisher": "Syycorax",
-  "icon": "logo.png",
+  "icon": "images/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Syycorax/codeplayground"
+  },
   "engines": {
     "vscode": "^1.90.0"
+  },
+  "author": {
+    "name": "Syycorax"
   },
   "categories": [
     "Other"
